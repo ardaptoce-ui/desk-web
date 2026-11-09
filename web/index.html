@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Desk" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="PAPER desk" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png" />
+  <title>Desk</title>
+  <link rel="stylesheet" href="./app.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Setup gate: shown when no DATA_PATH in localStorage -->
+    <section id="setup" class="screen setup-screen hidden" aria-live="polite">
+      <div class="setup-card">
+        <div class="setup-mark" aria-hidden="true">D</div>
+        <h1 class="setup-title">Desk</h1>
+        <p class="setup-copy">Open your private link once to unlock this device.</p>
+        <p class="setup-hint secondary">The link looks like <span class="mono">…#d=…</span> and is never stored in the page source.</p>
+      </div>
+    </section>
+
+    <!-- Error banner (keeps last good numbers) -->
+    <div id="error-banner" class="error-banner hidden" role="alert"></div>
+
+    <!-- Main chrome -->
+    <header id="topbar" class="topbar hidden">
+      <div class="topbar-title" id="topbar-title">Home</div>
+      <div class="topbar-meta">
+        <span id="updated-at" class="secondary mono"></span>
+      </div>
+    </header>
+
+    <main id="main" class="main hidden">
+      <!-- HOME -->
+      <section id="view-home" class="view active" data-view="home">
+        <div class="balance-block">
+          <div class="balance-row">
+            <div id="balance" class="balance-odometer num" aria-label="Balance">—</div>
+            <span id="paper-badge" class="pill pill-orange">PAPER</span>
+          </div>
+          <div id="day-pnl" class="day-pnl num secondary">—</div>
+        </div>
+
+        <div class="card chart-card">
+          <canvas id="balance-chart" class="chart-canvas" width="600" height="180" aria-label="Balance chart"></canvas>
+          <div id="balance-chart-empty" class="empty-inline hidden">No chart yet</div>
+        </div>
+
+        <h2 class="section-label">Open positions</h2>
+        <div id="positions" class="card list-card">
+          <div class="empty-state">No open positions</div>
+        </div>
+
+        <h2 class="section-label">Last activity</h2>
+        <div id="last-activity" class="card list-card">
+          <div class="empty-state">No activity yet</div>
+        </div>
+      </section>
+
+      <!-- AGENTS -->
+      <section id="view-agents" class="view" data-view="agents">
+        <h2 class="section-label">Agents</h2>
+        <div id="agents-list" class="card list-card">
+          <div class="empty-state">Waiting for heartbeats…</div>
+        </div>
+      </section>
+
+      <!-- ACTIVITY -->
+      <section id="view-activity" class="view" data-view="activity">
+        <h2 class="section-label">Activity</h2>
+        <div id="activity-feed" class="card list-card">
+          <div class="empty-state">No activity yet</div>
+        </div>
+      </section>
+
+      <!-- ACCOUNT -->
+      <section id="view-account" class="view" data-view="account">
+        <h2 class="section-label">Account</h2>
+        <div class="card list-card">
+          <div class="row">
+            <span class="row-label">Mode</span>
+            <span id="acct-mode" class="row-value num">—</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Chain</span>
+            <span id="acct-chain" class="row-value">—</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Analyst</span>
+            <span id="acct-analyst" class="row-value">—</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Notifier</span>
+            <span id="acct-notifier" class="row-value">—</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Open slots</span>
+            <span id="acct-slots" class="row-value num">—</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Poll</span>
+            <span id="acct-poll" class="row-value num">—</span>
+          </div>
+        </div>
+
+        <h2 class="section-label">This device</h2>
+        <div class="card list-card">
+          <button id="forget-device" class="btn-danger tap" type="button">Forget this device</button>
+          <p class="hint secondary">Clears the private path from localStorage. You will need the private link again.</p>
+        </div>
+      </section>
+
+      <!-- AUDITOR (detail, hash-routed) -->
+      <section id="view-auditor" class="view" data-view="auditor">
+        <button class="back-btn tap" data-back type="button">‹ Back</button>
+        <h2 class="section-label" id="auditor-title">Auditor</h2>
+        <div id="auditor-score" class="score-line num">—</div>
+        <div id="audit-beam" class="audit-beam card" aria-label="Audit layers"></div>
+        <div id="audit-details" class="card list-card"></div>
+      </section>
+
+      <!-- COIN (detail, hash-routed) -->
+      <section id="view-coin" class="view" data-view="coin">
+        <button class="back-btn tap" data-back type="button">‹ Back</button>
+        <div class="coin-header">
+          <div id="coin-symbol" class="coin-symbol">—</div>
+          <div id="coin-mint" class="mono secondary truncate"></div>
+        </div>
+        <div id="coin-price" class="balance-odometer num coin-price">—</div>
+        <div class="card chart-card">
+          <canvas id="coin-chart" class="chart-canvas" width="600" height="180" aria-label="Price chart"></canvas>
+          <div id="coin-chart-empty" class="empty-inline hidden">No chart yet</div>
+        </div>
+        <h2 class="section-label">Scan / Audit / Verdict</h2>
+        <div id="coin-pipeline" class="card list-card">
+          <div class="empty-state">No data</div>
+        </div>
+        <h2 class="section-label">Position</h2>
+        <div id="coin-position" class="card list-card">
+          <div class="empty-state">No position</div>
+        </div>
+        <div id="coin-fomo" class="fomo-wrap hidden"></div>
+      </section>
+    </main>
+
+    <!-- Bottom tab bar -->
+    <nav id="tabbar" class="tabbar hidden" role="tablist" aria-label="Main">
+      <button class="tab active tap" data-tab="home" role="tab" aria-selected="true" type="button">
+        <span class="tab-icon" aria-hidden="true">⌂</span>
+        <span class="tab-label">Home</span>
+      </button>
+      <button class="tab tap" data-tab="agents" role="tab" aria-selected="false" type="button">
+        <span class="tab-icon" aria-hidden="true">◎</span>
+        <span class="tab-label">Agents</span>
+      </button>
+      <button class="tab tap" data-tab="activity" role="tab" aria-selected="false" type="button">
+        <span class="tab-icon" aria-hidden="true">☰</span>
+        <span class="tab-label">Activity</span>
+      </button>
+      <button class="tab tap" data-tab="account" role="tab" aria-selected="false" type="button">
+        <span class="tab-icon" aria-hidden="true">☺</span>
+        <span class="tab-label">Account</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="./chart.js" defer></script>
+  <script src="./app.js" defer></script>
+</body>
+</html>
